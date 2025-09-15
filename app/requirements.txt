@@ -1,0 +1,9 @@
+flask==3.0.3
+gunicorn==21.2.0
+pyodbc==5.1.0
+azure-keyvault-secrets==4.8.0
+azure-identity==1.17.1
+# sqlalchemy==2.0.32
+# alembic==1.13.2
+
+# Note: For cost monitoring dependencies, see requirements-cost-monitoring.txt in project root

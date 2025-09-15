@@ -1,0 +1,247 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+.virtualenv/
+
+# Environment variables and secrets
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+*.env
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+terraform.tfvars.json
+*.tfplan
+*.tfplan.json
+
+# Azure
+.azure/
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# AI Code Editors and Assistants
+# Augment Code editor files
+augment-*/
+.augment/
+augment.log
+
+# Cursor AI editor
+.cursor/
+cursor.log
+
+# GitHub Copilot cache
+.copilot/
+
+# Codeium AI assistant
+.codeium/
+
+# Tabnine AI assistant
+.tabnine/
+
+# Amazon CodeWhisperer
+.aws-codewhisperer/
+
+# Replit AI
+.replit/
+replit.nix
+
+# Sourcegraph Cody
+.sourcegraph/
+
+# JetBrains AI Assistant
+.ai-assistant/
+
+# Continue.dev
+.continue/
+
+# Aider AI
+.aider*
+
+# AI chat history and sessions
+ai-chat-*.json
+ai-session-*.log
+*-ai-history
+*-corruption-*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Documentation builds
+docs/_build/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+
+# Project-specific
+# Cost monitoring outputs
+cost-dashboard.html
+cost-report.json
+monthly-costs.json
+*-costs.json
+*-dashboard.html
+test-dashboard.html
+
+# Deployment artifacts
+*.zip
+deployment-package/
+deployments/
+
+# Local development
+local-config.json
+dev-secrets.json
+
+# PII Data Protection
+.env.quotes
+# database/seed/quotes.json  # DEMO EXCEPTION: Allowed for documented demo purposes
+*quotes*.json
+!database/seed/quotes.json  # DEMO EXCEPTION: Explicitly allow demo seed file
+pii-data/
+*pii*
+
+# Azure CLI cache
+.azure-cli/
+
+# Container images (if built locally)
+*.tar
+docker-compose.override.yml
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Application logs
+app-logs*.zip
+LogFiles/
+
+# Validation outputs
+validation-*.json
+validation-*.html
+
+# Development history and debugging
+# AI editor corruption/debugging files
+*-corruption-*
+*-history
+debug-session-*
+development-artifacts/
+
+# PII Compliance - Prevent plain text data exposure
+database/seed/quotes-original.json
+database/seed/*quotes*.json
+!database/seed/quotes.json  # DEMO EXCEPTION: Explicitly allow demo seed file
+**/*quotes*.json
+!database/seed/quotes.json  # DEMO EXCEPTION: Explicitly allow demo seed file
+**/*pii*.json
+.env.quotes
+quotes-backup.*
+database/seed/quotes.db

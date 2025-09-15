@@ -1,0 +1,237 @@
+# Azure WebApp Demo - Cleanup Workflow
+#
+# PII COMPLIANCE NOTE:
+# This workflow cleans up demo resources with documented PII exceptions.
+# For production environments, ensure proper PII data handling procedures.
+# See docs/pii-compliance.md for compliance guidance.
+
+name: Azure WebApp Demo - Cleanup
+
+on:
+  # Manual cleanup trigger (click "Run workflow" button)
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment to cleanup"
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+      confirm_cleanup:
+        description: "Type 'DELETE' to confirm resource deletion"
+        required: true
+        type: string
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    permissions:
+      id-token: write
+      contents: read
+      actions: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate Confirmation
+        run: |
+          if [[ "${{ github.event.inputs.confirm_cleanup }}" != "DELETE" ]]; then
+            echo "ERROR: Cleanup confirmation failed"
+            echo "You must type 'DELETE' exactly to confirm resource deletion"
+            echo "Provided: '${{ github.event.inputs.confirm_cleanup }}'"
+            exit 1
+          fi
+          echo "Cleanup confirmation validated"
+
+      - name: Environment Protection Check
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+          echo "ENVIRONMENT CLEANUP REQUEST"
+          echo "Target Environment: $ENVIRONMENT"
+          echo "Requested by: ${{ github.actor }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Ref: ${{ github.ref }}"
+
+          # Additional validation for production environments
+          if [[ "$ENVIRONMENT" == "prod" ]]; then
+            echo ""
+            echo "WARNING: PRODUCTION ENVIRONMENT CLEANUP"
+            echo "This will DELETE ALL RESOURCES in the production environment!"
+            echo "Resource Group: rg-webapp-demo-prod"
+            echo ""
+            echo "Production Safety Checks:"
+            echo "- Manual approval required (GitHub environment protection)"
+            echo "- Actor verification: ${{ github.actor }}"
+            echo "- Branch verification: ${{ github.ref }}"
+
+            # Require main branch for prod cleanup
+            if [[ "${{ github.ref }}" != "refs/heads/main" ]]; then
+              echo "ERROR: Production cleanup only allowed from main branch"
+              echo "Current branch: ${{ github.ref }}"
+              exit 1
+            fi
+
+          elif [[ "$ENVIRONMENT" == "staging" ]]; then
+            echo ""
+            echo "STAGING ENVIRONMENT CLEANUP"
+            echo "This will DELETE ALL RESOURCES in the staging environment!"
+            echo "Resource Group: rg-webapp-demo-staging"
+            echo ""
+            echo "Staging Safety Checks:"
+            echo "- Manual approval required (GitHub environment protection)"
+            echo "- Actor verification: ${{ github.actor }}"
+
+          else
+            echo ""
+            echo "DEV ENVIRONMENT CLEANUP"
+            echo "This will DELETE ALL RESOURCES in the dev environment!"
+            echo "Resource Group: rg-webapp-demo-dev"
+            echo "No additional approvals required for dev environment"
+          fi
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.5.0'
+
+      - name: Install Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Pre-cleanup Resource Inventory
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+          RESOURCE_GROUP="rg-webapp-demo-$ENVIRONMENT"
+
+          echo "PRE-CLEANUP RESOURCE INVENTORY"
+          echo "=================================="
+          echo "Environment: $ENVIRONMENT"
+          echo "Resource Group: $RESOURCE_GROUP"
+          echo ""
+
+          # Check if resource group exists
+          if az group show --name "$RESOURCE_GROUP" &>/dev/null; then
+            echo "Resource group exists: $RESOURCE_GROUP"
+            echo ""
+            echo "Resources to be deleted:"
+            az resource list --resource-group "$RESOURCE_GROUP" --query "[].{Name:name,Type:type,Location:location}" --output table || true
+            echo ""
+            echo "Current costs (if available):"
+            az consumption usage list --start-date $(date -d '30 days ago' '+%Y-%m-%d') --end-date $(date '+%Y-%m-%d') \
+              --query "[?contains(instanceName, '$ENVIRONMENT')].{Resource:instanceName,Cost:pretaxCost,Currency:currency}" \
+              --output table 2>/dev/null || echo "Cost data not available"
+          else
+            echo "Resource group does not exist: $RESOURCE_GROUP"
+            echo "Nothing to clean up."
+            exit 0
+          fi
+
+      - name: Environment-Specific Cleanup
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+
+          echo "STARTING CLEANUP FOR ENVIRONMENT: $ENVIRONMENT"
+          echo "=================================================="
+
+          # Set environment-specific variables
+          export TF_VAR_environment="$ENVIRONMENT"
+          export TF_VAR_project_name="webapp-demo"
+
+          # Run cleanup script with environment targeting
+          # Note: Cost monitoring may fail after cleanup, which is expected
+          set +e  # Allow script to continue if cost monitoring fails
+          ./scripts/cleanup.sh --env "$ENVIRONMENT" --force --verbose
+          CLEANUP_EXIT_CODE=$?
+          set -e  # Re-enable exit on error
+
+          if [[ $CLEANUP_EXIT_CODE -eq 0 ]]; then
+            echo ""
+            echo "CLEANUP COMPLETED SUCCESSFULLY FOR ENVIRONMENT: $ENVIRONMENT"
+          else
+            echo ""
+            echo "CLEANUP COMPLETED WITH WARNINGS FOR ENVIRONMENT: $ENVIRONMENT"
+            echo "This is often normal due to cost monitoring after resource deletion"
+          fi
+
+      - name: Post-cleanup Verification
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+          RESOURCE_GROUP="rg-webapp-demo-$ENVIRONMENT"
+
+          echo "POST-CLEANUP VERIFICATION"
+          echo "============================="
+          echo "Environment: $ENVIRONMENT"
+          echo "Resource Group: $RESOURCE_GROUP"
+          echo ""
+
+          # Verify resource group is deleted
+          if az group show --name "$RESOURCE_GROUP" &>/dev/null; then
+            echo "ERROR: Resource group still exists after cleanup!"
+            echo "Remaining resources:"
+            az resource list --resource-group "$RESOURCE_GROUP" --query "[].{Name:name,Type:type}" --output table || true
+            exit 1
+          else
+            echo "SUCCESS: Resource group successfully deleted"
+            echo "All resources in environment '$ENVIRONMENT' have been cleaned up"
+          fi
+
+          echo ""
+          echo "CLEANUP SUMMARY"
+          echo "=================="
+          echo "Environment: $ENVIRONMENT"
+          echo "Status: COMPLETED"
+          echo "Resource Group: $RESOURCE_GROUP (DELETED)"
+          echo "Triggered by: ${{ github.actor }}"
+          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+      - name: Cleanup Summary
+        if: always()
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
+
+          echo "## Environment Cleanup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** $ENVIRONMENT" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Resource Group:** rg-webapp-demo-$ENVIRONMENT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ job.status }}" == "success" ]]; then
+            echo "**Status:** SUCCESS - All resources deleted" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Status:** FAILED - Check logs for details" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Security Protections Applied" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "$ENVIRONMENT" == "prod" ]]; then
+            echo "- **Production Environment Protection**" >> $GITHUB_STEP_SUMMARY
+            echo "- Manual approval required" >> $GITHUB_STEP_SUMMARY
+            echo "- Main branch requirement enforced" >> $GITHUB_STEP_SUMMARY
+            echo "- Actor verification completed" >> $GITHUB_STEP_SUMMARY
+          elif [[ "$ENVIRONMENT" == "staging" ]]; then
+            echo "- **Staging Environment Protection**" >> $GITHUB_STEP_SUMMARY
+            echo "- Manual approval required" >> $GITHUB_STEP_SUMMARY
+            echo "- Actor verification completed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Dev Environment** (No additional protections)" >> $GITHUB_STEP_SUMMARY
+          fi

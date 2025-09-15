@@ -1,0 +1,9 @@
+project_prefix = "webapp-demo"
+environment   = "dev"
+location      = "westus2"
+
+# Networking
+vnet_cidr                      = "10.20.0.0/16"
+subnet_app_integration_cidr    = "10.20.1.0/24"
+subnet_private_endpoints_cidr  = "10.20.2.0/24"
+

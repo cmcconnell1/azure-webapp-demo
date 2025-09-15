@@ -1,0 +1,51 @@
+[
+  {
+    "_comment": "DEMO PROJECT ONLY - Mock-PII Data Disclaimer",
+    "_warning": "This file contains mock-PII data (famous sports quotes) for demonstration purposes.",
+    "_violation": "Including PII data in source control violates security best practices.",
+    "_production": "In production: Store PII in Azure Key Vault, use secure data migration, never commit PII to git.",
+    "_justification": "Greenfield Terraform demo requires initial data to show working application. This is the 'chicken and egg' problem with infrastructure-as-code demos.",
+    "_requirement": "Project requirement: Treat all data as critical PII",
+    "_documentation": "See docs/pii-compliance.md for production-ready data loading procedures"
+  },
+  {
+    "author": "Michael Jordan",
+    "text": "I've missed more than 9000 shots in my career. I've lost almost 300 games. 26 times, I've been trusted to take the game winning shot and missed. I've failed over and over and over again in my life. And that is why I succeed."
+  },
+  {
+    "author": "Vince Lombardi",
+    "text": "The difference between a successful person and others is not a lack of strength, not a lack of knowledge, but rather a lack of will."
+  },
+  {
+    "author": "Muhammad Ali",
+    "text": "Float like a butterfly, sting like a bee. The hands can't hit what the eyes can't see."
+  },
+  {
+    "author": "Babe Ruth",
+    "text": "Every strike brings me closer to the next home run."
+  },
+  {
+    "author": "Wayne Gretzky",
+    "text": "You miss 100% of the shots you don't take."
+  },
+  {
+    "author": "Serena Williams",
+    "text": "I really think a champion is defined not by their wins but by how they can recover when they fall."
+  },
+  {
+    "author": "Kobe Bryant",
+    "text": "The most important thing is to try and inspire people so that they can be great at whatever they want to do."
+  },
+  {
+    "author": "Tom Brady",
+    "text": "Sometimes some of the toughest things you deal with end up being the best things because you realize the people that you can rely on, that love you and support you through it."
+  },
+  {
+    "author": "Usain Bolt",
+    "text": "I know what I can do so it doesn't bother me what other people think or their opinion on the situation."
+  },
+  {
+    "author": "Tiger Woods",
+    "text": "Achievements on the golf course are not what matters, decency and honesty are what matter."
+  }
+]

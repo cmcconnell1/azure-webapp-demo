@@ -1,0 +1,14 @@
+# Azure Automation Cleanup Script Dependencies
+# Required packages for azure-automation-cleanup.py
+
+# Azure SDK packages
+azure-identity==1.15.0
+azure-mgmt-resource==23.0.1
+azure-mgmt-costmanagement==4.0.1
+
+# HTTP requests for webhook notifications
+requests==2.31.0
+
+# Core dependencies (usually included with Python)
+# Listed here for completeness and version pinning
+typing-extensions==4.8.0
